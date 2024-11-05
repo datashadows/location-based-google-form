@@ -1,65 +1,89 @@
-// Define allowed coordinates and radius (in kilometers)
-const allowedCoordinates = [
-    { lat: -1.396732, lon: 36.748442 },
-    { lat: -1.398310, lon: 36.751777 },
-    { lat: -1.397311, lon: 36.757197 },
-    { lat: -1.396529, lon: 36.740211 },
-    { lat: -1.397676, lon: 36.764096 },
-    { lat: -1.390652, lon: 36.767931 }
-];
-const allowedRadius = 0.025; // 25 meters in kilometers
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location-Based Google Form</title>
+</head>
+<body>
+    <h1>Submit Your Response</h1>
+    <form id="responseForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required><br>
 
-document.getElementById('responseForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    
-    // Get user location
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const userLocation = {
-                lat: position.coords.latitude,
-                lon: position.coords.longitude
-            };
+        <label for="email">Email:</label>
+        <input type="email" id="email" required><br>
 
-            // Check if user location is within the allowed area
-            const isAllowed = allowedCoordinates.some(center => {
-                return isWithinRadius(userLocation, center, allowedRadius);
-            });
+        <input type="submit" value="Submit">
+    </form>
+    <div id="message"></div>
 
-            // Handle form submission
-            if (isAllowed) {
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
+    <script>
+        // Define allowed coordinates and radius (in kilometers)
+        const allowedCoordinates = [
+            { lat: -1.396732, lon: 36.748442 },
+            { lat: -1.398310, lon: 36.751777 },
+            { lat: -1.397311, lon: 36.757197 },
+            { lat: -1.396529, lon: 36.740211 },
+            { lat: -1.397676, lon: 36.764096 },
+            { lat: -1.390652, lon: 36.767931 }
+        ];
+        const allowedRadius = 0.025; // 25 meters in kilometers
 
-                // Here, you would normally send the data to your server or Google Form
-                console.log(`Form submitted successfully: Name: ${name}, Email: ${email}`);
-                document.getElementById('message').innerText = 'Form submitted successfully!';
+        document.getElementById('responseForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            
+            // Get user location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    };
+
+                    // Check if user location is within the allowed area
+                    const isAllowed = allowedCoordinates.some(center => {
+                        return isWithinRadius(userLocation, center, allowedRadius);
+                    });
+
+                    // Handle form submission
+                    if (isAllowed) {
+                        const name = document.getElementById('name').value;
+                        const email = document.getElementById('email').value;
+
+                        // Here, you would normally send the data to your server or Google Form
+                        console.log(`Form submitted successfully: Name: ${name}, Email: ${email}`);
+                        document.getElementById('message').innerText = 'Form submitted successfully!';
+                    } else {
+                        document.getElementById('message').innerText = 'You are not in an allowed location to submit the form.';
+                    }
+                }, () => {
+                    document.getElementById('message').innerText = 'Unable to retrieve your location.';
+                });
             } else {
-                document.getElementById('message').innerText = 'You are not in an allowed location to submit the form.';
+                document.getElementById('message').innerText = 'Geolocation is not supported by your browser.';
             }
-        }, () => {
-            document.getElementById('message').innerText = 'Unable to retrieve your location.';
         });
-    } else {
-        document.getElementById('message').innerText = 'Geolocation is not supported by your browser.';
-    }
-});
 
-// Function to check if the user's location is within a given radius
-function isWithinRadius(userLocation, center, radius) {
-    const R = 6371; // Radius of the Earth in kilometers
-    const dLat = toRadians(userLocation.lat - center.lat);
-    const dLon = toRadians(userLocation.lon - center.lon);
+        // Function to check if the user's location is within a given radius
+        function isWithinRadius(userLocation, center, radius) {
+            const R = 6371; // Radius of the Earth in kilometers
+            const dLat = toRadians(userLocation.lat - center.lat);
+            const dLon = toRadians(userLocation.lon - center.lon);
 
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(toRadians(center.lat)) * Math.cos(toRadians(userLocation.lat)) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(toRadians(center.lat)) * Math.cos(toRadians(userLocation.lat)) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Distance in kilometers
 
-    return distance <= radius; // Return true if within the allowed radius
-}
+            return distance <= radius; // Return true if within the allowed radius
+        }
 
-// Helper function to convert degrees to radians
-function toRadians(degrees) {
-    return degrees * Math.PI / 180;
-}
+        // Helper function to convert degrees to radians
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+    </script>
+</body>
+</html>
