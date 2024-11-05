@@ -51,9 +51,23 @@
                         const name = document.getElementById('name').value;
                         const email = document.getElementById('email').value;
 
-                        // Here, you would normally send the data to your server or Google Form
-                        console.log(`Form submitted successfully: Name: ${name}, Email: ${email}`);
-                        document.getElementById('message').innerText = 'Form submitted successfully!';
+                        // Prepare data for Google Form submission
+                        const formData = new FormData();
+                        formData.append('entry.2005620554', name);  // Replace with the correct entry ID for the name field
+                        formData.append('entry.1045781291', email); // Replace with the correct entry ID for the email field
+
+                        // Submit data to Google Form
+                        fetch('https://docs.google.com/forms/d/e/1hWCAp3vIeJ2ULvRHx0fXo1YFIb2dhKXspTzAhM6V6es/formResponse', {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            body: formData
+                        })
+                        .then(() => {
+                            document.getElementById('message').innerText = 'Form submitted successfully!';
+                        })
+                        .catch(() => {
+                            document.getElementById('message').innerText = 'Error submitting the form.';
+                        });
                     } else {
                         document.getElementById('message').innerText = 'You are not in an allowed location to submit the form.';
                     }
