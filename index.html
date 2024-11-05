@@ -3,89 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location-Based Google Form</title>
-</head>
-<body>
-    <h1>Location-Based Submission</h1>
-    <button id="submitButton">Submit</button>
-    <div id="message"></div>
-
+    <title>Revenues Form</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #location-message {
+            text-align: center;
+            padding: 20px;
+            font-size: 20px;
+        }
+        #google-form {
+            width: 100vw;
+            height: 100vh;
+            display: none;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
     <script>
-        // Define allowed coordinates and radius (in kilometers)
-        const allowedCoordinates = [
-            { lat: -1.396732, lon: 36.748442 },
-            { lat: -1.398310, lon: 36.751777 },
-            { lat: -1.397311, lon: 36.757197 },
-            { lat: -1.396529, lon: 36.740211 },
-            { lat: -1.397676, lon: 36.764096 },
-            { lat: -1.390652, lon: 36.767931 }
-        ];
-        const allowedRadius = 0.025; // 25 meters in kilometers
-
-        document.getElementById('submitButton').addEventListener('click', function () {
-            // Get user location
+        function checkLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const userLocation = {
-                        lat: position.coords.latitude,
-                        lon: position.coords.longitude
-                    };
-
-                    // Check if user location is within the allowed area
-                    const isAllowed = allowedCoordinates.some(center => {
-                        return isWithinRadius(userLocation, center, allowedRadius);
-                    });
-
-                    // Handle form submission
-                    if (isAllowed) {
-                        // Prepare data for Google Form submission
-                        const formData = new FormData();
-                        // Use appropriate entry IDs for your Google Form fields
-                        formData.append('entry.2005620554', '');  // Placeholder if your form requires an entry
-                        formData.append('entry.1045781291', ''); // Placeholder if your form requires an entry
-
-                        // Submit data to Google Form
-                        fetch('https://docs.google.com/forms/d/e/1hWCAp3vIeJ2ULvRHx0fXo1YFIb2dhKXspTzAhM6V6es/formResponse', {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            body: formData
-                        })
-                        .then(() => {
-                            document.getElementById('message').innerText = 'Form submitted successfully!';
-                        })
-                        .catch(() => {
-                            document.getElementById('message').innerText = 'Error submitting the form.';
-                        });
-                    } else {
-                        document.getElementById('message').innerText = 'You are not in an allowed location to submit the form.';
-                    }
-                }, () => {
-                    document.getElementById('message').innerText = 'Unable to retrieve your location.';
-                });
+                navigator.geolocation.getCurrentPosition(showFormBasedOnLocation, showError);
             } else {
-                document.getElementById('message').innerText = 'Geolocation is not supported by your browser.';
+                alert("Geolocation is not supported by this browser.");
             }
-        });
-
-        // Function to check if the user's location is within a given radius
-        function isWithinRadius(userLocation, center, radius) {
-            const R = 6371; // Radius of the Earth in kilometers
-            const dLat = toRadians(userLocation.lat - center.lat);
-            const dLon = toRadians(userLocation.lon - center.lon);
-
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      Math.cos(toRadians(center.lat)) * Math.cos(toRadians(userLocation.lat)) *
-                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distance = R * c; // Distance in kilometers
-
-            return distance <= radius; // Return true if within the allowed radius
         }
 
-        // Helper function to convert degrees to radians
-        function toRadians(degrees) {
-            return degrees * Math.PI / 180;
+        function showFormBasedOnLocation(position) {
+            const userLat = position.coords.latitude;
+            const userLong = position.coords.longitude;
+
+            console.log("User Location:", userLat, userLong); // Debugging output
+
+            const allowedLocations = [
+                { lat: -1.390693, long: 36.767681 },
+               
+            ];
+
+            // Check if user is in one of the allowed locations
+            const radiusInMeters = 500; // Allowable radius in meters
+            const isAllowed = allowedLocations.some(location => 
+                calculateDistance(userLat, userLong, location.lat, location.long) <= radiusInMeters
+            );
+
+            if (isAllowed) {
+                document.getElementById('google-form').style.display = 'block';
+                document.getElementById('location-message').style.display = 'none';
+            } else {
+                document.getElementById('location-message').innerHTML = 'You are not in the allowed location to fill out this form.';
+            }
+        }
+
+        function showError(error) {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Permission denied. Please allow location access to use this form.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        // Calculate distance between two points in meters
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth's radius in meters
+            const phi1 = lat1 * Math.PI / 180;
+            const phi2 = lat2 * Math.PI / 180;
+            const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+            const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                      Math.cos(phi1) * Math.cos(phi2) *
+                      Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c; // Distance in meters
         }
     </script>
+</head>
+<body onload="checkLocation()">
+    <div id="location-message">Please wait a moment while we check your location...</div>
+    <div id="google-form">
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfgfxj5fQLjKbVcehxY4PczLPvNNOFjvdfzm7kpmmnjD3W5cw/viewform?embedded=true"></iframe>
+    </div>
 </body>
 </html>
